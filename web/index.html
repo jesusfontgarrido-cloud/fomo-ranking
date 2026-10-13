@@ -1,0 +1,703 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0A0A0A">
+<title>Ranking FOMO</title>
+<link rel="icon" href="img/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,400&family=Poppins:wght@400;500;600;700&display=swap">
+<style>
+/* Concepto: columna de móvil. Modo oscuro por defecto (fondo negro, naranja FOMO como destaque) y modo claro con el tema blanco del manual. Podio con disco de ajedrez, filetes de 2px, sin sombras ni degradados. El modo lo elige el botón de la cabecera (atributo data-fomo), no el sistema. */
+:root{
+  --brand:#FFAB61;--brand-deep:#D68E51;--ink:#0A0A0A;--paper:#FFFFFF;
+  --accent:#FFAB61;--on-accent:#0A0A0A;
+  --surface:#0A0A0A;--card:#1B1714;--fill-4:#2B2118;--text:#F7F1EA;--muted:#CDBBA8;--line:#6F6256;
+  --sheet:#141110;--input:#0A0A0A;--panel:#1B1714;--on-panel:#F7F1EA;--panel-line:#6F6256;
+  --pri-bg:#FFAB61;--pri-text:#0A0A0A;--nav-bg:#1B1714;--nav-text:#F7F1EA;--nav-line:#6F6256;
+  --focus:#FFAB61;--toast-bg:#FFAB61;--toast-text:#0A0A0A;
+  --sans:"Poppins","Helvetica Neue",Arial,sans-serif;--serif:"Playfair Display",Georgia,"Times New Roman",serif;
+  --s1:4px;--s2:8px;--s3:16px;--s4:24px;--s5:40px;--s6:64px;
+  --r-sm:6px;--r-md:12px;--r-lg:24px;--r-full:999px;
+  color-scheme:dark;
+}
+:root[data-fomo="light"]{
+  --surface:#FFFFFF;--card:#FFF1E3;--fill-4:#FFE2C6;--text:#0A0A0A;--muted:#5C4A3A;--line:#0A0A0A;
+  --sheet:#FFFFFF;--input:#FFFFFF;--panel:#0A0A0A;--on-panel:#FFFFFF;--panel-line:#0A0A0A;
+  --pri-bg:#0A0A0A;--pri-text:#FFFFFF;--nav-bg:#0A0A0A;--nav-text:#FFFFFF;--nav-line:#0A0A0A;
+  --focus:#0A0A0A;--toast-bg:#0A0A0A;--toast-text:#FFFFFF;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html{background:var(--surface);min-height:100%;-webkit-text-size-adjust:100%}
+body{margin:0;min-height:100vh;min-height:100dvh;background:var(--surface);color:var(--text);font:400 15px/1.45 var(--sans);-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+em{font-family:var(--serif);font-style:italic;font-weight:400;letter-spacing:-.05em}
+.app{max-width:480px;margin:0 auto;padding-inline:16px;padding-block:12px 170px}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+
+.top{display:flex;align-items:center;gap:8px;padding-block:8px 16px}
+.logo{width:44px;height:44px;border-radius:var(--r-full);border:2px solid var(--line);object-fit:cover;background:var(--brand);flex:none}
+.top .name{font-weight:700;letter-spacing:-.03em;font-size:17px;line-height:1.1}
+.top .sub{font-size:12px;color:var(--muted)}
+.sp{flex:1}
+.iconbtn{width:44px;height:44px;border-radius:var(--r-full);border:2px solid var(--line);background:var(--card);display:grid;place-items:center;flex:none}
+.pill{display:inline-flex;align-items:center;gap:6px;border:2px solid var(--line);border-radius:var(--r-full);padding:2px 10px;font-size:12px;font-weight:600;letter-spacing:.02em;background:var(--card);white-space:nowrap}
+.pill.ink{background:var(--accent);color:var(--on-accent)}
+.cap{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+h1,h2,h3{margin:0;font-weight:600;letter-spacing:-.04em;line-height:1.02;text-wrap:balance}
+h1{font-size:38px}
+h2{font-size:22px}
+.muted{color:var(--muted)}
+
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px}
+.chip{border:2px solid var(--line);background:transparent;border-radius:var(--r-full);padding:6px 14px;font-weight:600;font-size:13px;white-space:nowrap;min-height:36px}
+.chip[aria-pressed=true]{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+
+.head{display:grid;gap:8px;margin-bottom:16px}
+.head .meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+.podium{background:var(--panel);color:var(--on-panel);border:2px solid var(--panel-line);border-radius:var(--r-lg);padding:28px 12px 0;overflow:hidden;display:grid;grid-template-columns:1fr 1.3fr 1fr;align-items:end;gap:6px;margin-bottom:16px}
+.pod{display:flex;flex-direction:column;align-items:center;text-align:center;min-width:0;background:none;border:0;color:inherit;padding:0;width:100%}
+.disc{display:grid;place-items:center;border-radius:var(--r-full);width:140px;height:140px;background:conic-gradient(var(--panel) 25%,var(--brand) 0 50%,var(--panel) 0 75%,var(--brand) 0) 0 0/48px 48px}
+.ph{border-radius:var(--r-full);object-fit:cover;background:var(--fill-4);display:block}
+.pod .ph{width:76px;height:76px;border:2px solid var(--on-panel)}
+.pod.w .ph{width:112px;height:112px;border:3px solid var(--panel)}
+.pod.empty .ph{background:transparent;border:2px dashed rgba(255,255,255,.4)}
+.pod b{font-size:13px;font-weight:600;letter-spacing:-.01em;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:8px}
+.pod .pts{font-size:12px;color:var(--brand);font-weight:600;font-variant-numeric:tabular-nums;margin-bottom:8px}
+.pod .tg{font-size:11px;opacity:.8;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.step{width:100%;border-radius:12px 12px 0 0;display:grid;place-items:start center;padding-top:6px;font-weight:700;font-size:28px;letter-spacing:-.04em;color:var(--ink);background:var(--brand-deep)}
+.pod.w .step{background:var(--brand)}
+.s1{height:96px}.s2{height:64px}.s3{height:44px}
+.s2,.s3{background:var(--brand-deep)}
+
+.card{background:var(--card);border:2px solid var(--line);border-radius:var(--r-md);padding:16px}
+.mine{display:grid;grid-template-columns:64px 1fr;gap:12px;align-items:center;margin-bottom:16px}
+.mine .th{width:64px;height:64px}
+.big{font-size:34px;font-weight:700;letter-spacing:-.05em;line-height:1;font-variant-numeric:tabular-nums}
+.tally{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.list{display:grid;gap:8px;margin-top:12px}
+.row{display:grid;grid-template-columns:34px 56px 1fr auto;gap:12px;align-items:center;background:var(--card);border:2px solid var(--line);border-radius:var(--r-md);padding:8px 12px 8px 8px;width:100%;text-align:left}
+.row.me{background:var(--fill-4)}
+.rk{font-weight:700;font-size:20px;letter-spacing:-.04em;text-align:center;font-variant-numeric:tabular-nums}
+.th{width:56px;height:56px;border-radius:8px;object-fit:cover;border:2px solid var(--line);background:var(--fill-4);display:block}
+.row .who{min-width:0}
+.row .who b{display:block;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .who span{display:block;font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .sc{font-weight:700;font-size:18px;letter-spacing:-.03em;font-variant-numeric:tabular-nums;text-align:right}
+.row .sc small{display:block;font-size:11px;font-weight:500;color:var(--muted);letter-spacing:0}
+
+.empty{background:var(--panel);color:var(--on-panel);border:2px solid var(--panel-line);border-radius:var(--r-lg);padding:28px 20px;display:grid;gap:12px;justify-items:center;text-align:center;margin-bottom:16px}
+.empty .disc{width:96px;height:96px}
+.empty h2{font-size:24px}
+.empty p{margin:0;opacity:.85}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:2px solid var(--line);border-radius:var(--r-full);padding:10px 20px;min-height:44px;font-weight:600;background:var(--card);color:var(--text)}
+.btn.pri{background:var(--pri-bg);color:var(--pri-text);border-color:var(--pri-bg)}
+.btn.brand{background:var(--brand)}
+.btn.sm{min-height:36px;padding:6px 14px;font-size:13px}
+.btn.wide{width:100%}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.btn.armed{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.cta{position:fixed;left:0;right:0;bottom:calc(84px + env(safe-area-inset-bottom,0px));display:flex;justify-content:center;padding:8px 16px 4px;background:var(--surface);z-index:15;pointer-events:none}
+.cta .btn{pointer-events:auto;max-width:448px;width:100%}
+
+.nav{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;padding:8px 16px calc(12px + env(safe-area-inset-bottom,0px));background:var(--surface);z-index:20}
+.nav .bar{pointer-events:auto;display:flex;gap:4px;background:var(--nav-bg);border:2px solid var(--nav-line);border-radius:var(--r-full);padding:6px;width:100%;max-width:448px}
+.nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;border:0;background:transparent;color:var(--nav-text);padding:8px 4px;border-radius:var(--r-full);font-size:11px;font-weight:600;letter-spacing:.02em;min-height:52px}
+.nav button[aria-current=page]{background:var(--brand);color:var(--ink)}
+
+.budget{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:var(--surface);margin-inline:-16px;padding:8px 16px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.bud{background:var(--card);border:2px solid var(--line);border-radius:var(--r-md);padding:8px 10px;display:grid;gap:2px;justify-items:start}
+.bud b{font-size:12px;font-weight:600}
+.dots{display:flex;gap:4px}
+.dot{width:12px;height:12px;border-radius:var(--r-full);border:2px solid var(--accent);background:var(--accent)}
+.dot.off{background:transparent}
+.feed{display:grid;gap:20px}
+.vc{background:var(--card);border:2px solid var(--line);border-radius:var(--r-lg);padding:8px;display:grid;gap:8px}
+.vimg{position:relative;aspect-ratio:4/5;border-radius:16px;overflow:hidden;background:var(--fill-4);border:2px solid var(--line)}
+.vimg img{width:100%;height:100%;object-fit:cover;display:block}
+.stk{display:inline-flex;gap:6px;align-items:center;background:var(--paper);color:#0A0A0A;border:2px solid #0A0A0A;border-radius:var(--r-sm);padding:4px 10px;font-size:13px;font-weight:600;max-width:100%;min-height:32px}
+.stickers{position:absolute;left:8px;bottom:8px;right:8px;display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+.vbtns{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.vb{display:grid;justify-items:center;gap:4px;border:2px solid var(--line);border-radius:var(--r-md);background:var(--card);padding:10px 4px;font-size:12px;font-weight:600;min-height:64px}
+.vb[aria-pressed=true]{background:var(--text);color:var(--surface);border-color:var(--text)}
+.vb.like[aria-pressed=true]{background:var(--brand-deep);color:#0A0A0A;border-color:var(--brand-deep)}
+.vb.love[aria-pressed=true]{background:var(--brand);color:#0A0A0A;border-color:var(--brand)}
+.vb.off{opacity:.45}
+
+.prof{display:grid;gap:16px}
+.pcard{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center}
+.av{border-radius:var(--r-full);object-fit:cover;border:2px solid var(--line);background:var(--fill-4);display:grid;place-items:center;font-weight:700;color:var(--text);flex:none}
+.av.lg{width:88px;height:88px;font-size:34px}
+.pcard h1{font-size:30px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tile{position:relative;aspect-ratio:4/5;border:2px solid var(--line);border-radius:var(--r-md);overflow:hidden;padding:0;background:var(--fill-4)}
+.tile img{width:100%;height:100%;object-fit:cover;display:block}
+.tile .stk{position:absolute;left:4px;bottom:4px;padding:2px 8px;min-height:24px;font-size:11px}
+.sec{display:grid;gap:8px}
+
+.seg{display:flex;gap:8px;margin-bottom:12px}
+.arow{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;background:var(--card);border:2px solid var(--line);border-radius:var(--r-md);padding:10px}
+.arow .who{min-width:0}
+.arow .who b{display:block;overflow-wrap:anywhere}
+.arow .who span{display:block;font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+.arow .th{width:48px;height:48px}
+.acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.ctc{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px;font-weight:600;font-size:13px}
+.ctc a{color:var(--text)}
+
+#sheet .scrim{position:fixed;inset:0;background:rgba(10,10,10,.62);z-index:30}
+#sheet .panel{position:fixed;left:0;right:0;bottom:0;margin:0 auto;max-width:520px;max-height:92%;overflow:auto;background:var(--sheet);color:var(--text);border:2px solid var(--line);border-bottom:0;border-radius:var(--r-lg) var(--r-lg) 0 0;padding:20px 16px calc(24px + env(safe-area-inset-bottom,0px));z-index:31;display:grid;gap:16px}
+.shead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.shead h2{font-size:28px}
+.field{display:grid;gap:6px}
+.field label,.lbl{font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase}
+.field input,.field textarea{border:2px solid var(--line);border-radius:var(--r-sm);padding:12px;background:var(--input);width:100%}
+.field textarea{min-height:84px;resize:vertical}
+.field .hint{font-size:12px;color:var(--muted)}
+.roles{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.role{border:2px solid var(--line);border-radius:var(--r-md);background:var(--card);padding:12px;font-weight:600;min-height:48px}
+.role[aria-pressed=true]{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.avpick{display:flex;gap:16px;align-items:center}
+.drop{display:grid;place-items:center;gap:8px;text-align:center;border:2px dashed var(--line);border-radius:var(--r-md);padding:16px;background:var(--fill-4);min-height:140px;cursor:pointer}
+.drop img{max-height:280px;max-width:100%;border-radius:var(--r-md);border:2px solid var(--line)}
+.taglist{display:grid;gap:6px;max-height:200px;overflow:auto}
+.tagopt{display:flex;align-items:center;gap:10px;border:2px solid var(--line);border-radius:var(--r-md);background:var(--card);padding:6px 10px;text-align:left;min-height:48px}
+.tagopt[aria-pressed=true]{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.tagopt .av{width:32px;height:32px;font-size:14px}
+.err{margin:0;border:2px solid var(--line);border-radius:var(--r-sm);padding:8px 12px;background:var(--fill-4);font-weight:600}
+.steps{margin:0;padding:0;list-style:none;display:grid;gap:12px;counter-reset:s}
+.steps li{display:grid;grid-template-columns:32px 1fr;gap:12px;counter-increment:s}
+.steps li::before{content:counter(s);display:grid;place-items:center;width:32px;height:32px;border-radius:var(--r-full);background:var(--accent);color:var(--on-accent);font-weight:700}
+.steps b{display:block}
+.pimg{width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:16px;border:2px solid var(--line);background:var(--fill-4);display:block}
+.kv{display:flex;flex-wrap:wrap;gap:6px}
+#toast{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top,0px));transform:translateX(-50%);background:var(--toast-bg);color:var(--toast-text);border-radius:var(--r-full);padding:10px 18px;font-weight:600;font-size:14px;z-index:50;max-width:calc(100% - 32px);text-align:center;display:none}
+#toast.show{display:block}
+.note{font-size:13px;color:var(--muted);margin:0}
+.rules{background:var(--fill-4);border:2px solid var(--line);border-radius:var(--r-md);padding:12px 14px;display:grid;gap:6px;font-size:13px}
+.rules b{font-size:14px}
+.rules ul{margin:0;padding-left:18px;display:grid;gap:2px}
+
+/* Animaciones sencillas: entran al cambiar de pantalla, no en cada actualización de datos */
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes sheetUp{from{transform:translateY(32px);opacity:0}to{transform:none;opacity:1}}
+@keyframes grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.12)}100%{transform:scale(1)}}
+@keyframes toastIn{from{opacity:0;transform:translate(-50%,-8px)}to{opacity:1;transform:translate(-50%,0)}}
+main.enter>*{animation:rise .38s cubic-bezier(.2,.7,.2,1) both}
+main.enter>*:nth-child(2){animation-delay:.05s}
+main.enter>*:nth-child(3){animation-delay:.1s}
+main.enter>*:nth-child(4){animation-delay:.15s}
+main.enter>*:nth-child(5){animation-delay:.2s}
+main.enter>*:nth-child(n+6){animation-delay:.25s}
+main.enter .step{transform-origin:bottom;animation:grow .5s cubic-bezier(.2,.7,.2,1) both}
+main.enter .s1{animation-delay:.08s}
+main.enter .s2{animation-delay:.18s}
+main.enter .s3{animation-delay:.26s}
+main.enter .pod.w .disc{animation:pop .6s .45s both}
+#sheet .scrim{animation:fade .2s both}
+#sheet .panel{animation:sheetUp .28s cubic-bezier(.2,.7,.2,1) both}
+#toast.show{animation:toastIn .22s both}
+.btn,.vb,.chip,.role,.tagopt,.iconbtn,.row,.tile,.pod,.nav button{transition:transform .12s ease,background-color .15s ease,color .15s ease}
+.btn:active,.vb:active,.chip:active,.role:active,.tagopt:active,.iconbtn:active,.row:active,.tile:active,.pod:active,.nav button:active{transform:scale(.96)}
+.vb.pop{animation:pop .35s ease}
+.dot{transition:background-color .2s ease}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="sheet"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<script src="config.js"></script>
+<script>
+(function(){
+'use strict';
+var W={love:3,like:1,dislike:-1},CAP={love:1,like:2,dislike:1};
+var LAB={love:'Me encanta',like:'Me gusta',dislike:'No me gusta'};
+var ROLE={fotografo:'Fotógrafo/a',modelo:'Modelo'};
+var ASSET={logo:'img/banner.png',avatar:'img/logo.png'};
+var nf=new Intl.NumberFormat('es-ES');
+var $=function(s){return document.querySelector(s)};
+var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+var str=function(v,n){return typeof v==='string'?v.slice(0,n):''};
+var clamp=function(n,a,b){return Math.max(a,Math.min(b,n))};
+var okImg=function(s){return typeof s==='string'&&/^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(s)?s:''};
+function ic(d,s){s=s||20;return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+d+'</svg>'}
+var P={
+up:'<path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/>',
+down:'<path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"/>',
+heart:'<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>',
+cam:'<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>',
+user:'<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+list:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
+shield:'<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>',
+x:'<path d="M18 6 6 18M6 6l12 12"/>',
+plus:'<path d="M12 5v14M5 12h14"/>',
+trash:'<path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/>',
+copy:'<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+help:'<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>',
+edit:'<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
+sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',
+moon:'<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>'
+};
+
+var S={token:'',uid:null,isAdmin:false,meName:'',fatal:'',netErr:'',loaded:false,pending:0,authMode:'login',viewKey:'',
+ profiles:new Map(),events:new Map(),photos:new Map(),admins:new Set(),contacts:new Map(),counts:{},myVotesMap:{},myContact:undefined,
+ tab:'ranking',eventId:null,sheet:null,adminSec:'quedadas',cache:{},fullUrl:new Map(),
+ form:{},up:{},lastHtml:null};
+function applyTheme(t){document.documentElement.setAttribute('data-fomo',t);var m=document.querySelector('meta[name=theme-color]');if(m)m.setAttribute('content',t==='light'?'#FFFFFF':'#0A0A0A')}
+S.theme='dark';try{if(localStorage.getItem('fomo-theme')==='light')S.theme='light'}catch(e){}
+applyTheme(S.theme);
+
+/* ---------- utilidades ---------- */
+var urlCache=new Map();
+function dataToUrl(d){if(!d)return '';var u=urlCache.get(d);if(u!==undefined)return u;try{var b=atob(d.split(',')[1]);var a=new Uint8Array(b.length);for(var i=0;i<b.length;i++)a[i]=b.charCodeAt(i);u=URL.createObjectURL(new Blob([a],{type:'image/jpeg'}))}catch(e){u=''}urlCache.set(d,u);return u}
+function hash(s){var h=5381;for(var i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return h}
+function slug(s){return s.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,40)||'quedada'}
+function fmtDate(d){try{return new Date(d+'T12:00:00').toLocaleDateString('es-ES',{day:'numeric',month:'long'})}catch(e){return d||''}}
+var toastT=0;
+function toast(m){var t=$('#toast');t.textContent=m;t.className='show';clearTimeout(toastT);toastT=setTimeout(function(){t.className=''},3400)}
+var raf=0;
+function render(){if(raf)return;raf=requestAnimationFrame(function(){raf=0;draw()})}
+function bump(){S.cache={};render()}
+function nm(uid){var p=S.profiles.get(uid);return p?p.name:'Usuario eliminado'}
+function avatar(uid,size,cls){var p=S.profiles.get(uid);var st='width:'+size+'px;height:'+size+'px';if(p&&p.avatar)return '<img class="av '+(cls||'')+'" style="'+st+'" src="'+p.avatar+'" alt="">';var c=p&&p.name?p.name.trim().charAt(0).toUpperCase():'?';return '<span class="av '+(cls||'')+'" style="'+st+';font-size:'+Math.round(size*.42)+'px" aria-hidden="true">'+esc(c)+'</span>'}
+function evList(){return Array.from(S.events.values()).sort(function(a,b){return (b.date||'').localeCompare(a.date||'')})}
+function curEvent(){var l=evList();if(!l.length)return null;var e=S.events.get(S.eventId);if(e)return e;return l.find(function(x){return x.status==='open'})||l[0]}
+function me(){return S.profiles.get(S.uid)}
+function needsOnboard(){return false}
+
+/* ---------- ranking ---------- */
+function tally(evId){
+ var k='t'+evId;if(S.cache[k])return S.cache[k];
+ var out=new Map();
+ S.photos.forEach(function(p){if(p.eventId!==evId)return;var c=S.counts[p.id]||{};var o={love:+c.love||0,like:+c.like||0,dislike:+c.dislike||0};o.pts=o.love*W.love+o.like*W.like+o.dislike*W.dislike;out.set(p.id,o)});
+ return S.cache[k]=out;
+}
+function rankFor(evId){
+ var k='r'+evId;if(S.cache[k])return S.cache[k];
+ var t=tally(evId);var arr=[];
+ S.photos.forEach(function(p){if(p.eventId===evId){var o=t.get(p.id)||{pts:0,love:0,like:0,dislike:0};arr.push({p:p,pts:o.pts,love:o.love,like:o.like,dislike:o.dislike})}});
+ arr.sort(function(a,b){return b.pts-a.pts||b.love-a.love||b.like-a.like||a.dislike-b.dislike||a.p.createdAt-b.p.createdAt});
+ arr.forEach(function(r,i){r.rank=i+1});
+ return S.cache[k]=arr;
+}
+function myVotes(evId){var out={};for(var pid in S.myVotesMap){var p=S.photos.get(pid);var t=S.myVotesMap[pid];if(p&&p.eventId===evId&&CAP[t]!==undefined)out[pid]=t}return out}
+function usage(evId){var u={love:0,like:0,dislike:0};var m=myVotes(evId);for(var k in m)u[m[k]]++;return u}
+function myCount(evId){var n=0;S.photos.forEach(function(p){if(p.eventId===evId&&p.authorId===S.uid)n++});return n}
+
+/* ---------- vistas ---------- */
+function accentTitle(prefix,name){var parts=String(name).trim().split(/\s+/);var last=parts.pop()||'';return esc(prefix)+' '+(parts.length?esc(parts.join(' '))+' ':'')+'<em>'+esc(last)+'</em>'}
+function header(){
+ return '<header class="top"><img class="logo" src="'+ASSET.avatar+'" alt="FOMO">'+
+ '<div><div class="name">FOMO Sevilla</div><div class="sub">Ranking</div></div><span class="sp"></span>'+
+ (S.isAdmin?'<span class="pill ink">Admin</span>':'')+
+ '<button class="iconbtn" data-act="theme" aria-label="'+(S.theme==='dark'?'Cambiar a modo claro':'Cambiar a modo oscuro')+'">'+ic(S.theme==='dark'?P.sun:P.moon)+'</button><button class="iconbtn" data-act="help" aria-label="Cómo funciona">'+ic(P.help)+'</button></header>';
+}
+function eventChips(){
+ var l=evList();var c=curEvent();if(l.length<2)return '';
+ return '<div class="chips" role="group" aria-label="Quedadas">'+l.map(function(e){return '<button class="chip" data-act="event" data-id="'+esc(e.id)+'" aria-pressed="'+(c&&c.id===e.id)+'">'+esc(e.name)+'</button>'}).join('')+'</div>';
+}
+function podium(rows){
+ var slots=[rows[1],rows[0],rows[2]];var cls=['','w',''];var st=['s2','s1','s3'];var n=['2','1','3'];
+ return '<section class="podium" aria-label="Podio">'+slots.map(function(r,i){
+  if(!r)return '<div class="pod empty"><span class="ph"></span><b>&nbsp;</b><span class="pts">&nbsp;</span><div class="step '+st[i]+'">'+n[i]+'</div></div>';
+  var img='<img class="ph" src="'+r.p.thumb+'" alt="Foto de '+esc(nm(r.p.authorId))+'">';
+  var tg=r.p.taggedId&&S.profiles.has(r.p.taggedId)?'<span class="tg">con '+esc(nm(r.p.taggedId))+'</span>':'';
+  return '<button class="pod '+cls[i]+'" data-act="photo" data-id="'+esc(r.p.id)+'">'+(i===1?'<span class="disc">'+img+'</span>':img)+
+  '<b>'+esc(nm(r.p.authorId))+'</b>'+tg+'<span class="pts">'+nf.format(r.pts)+' pts</span><div class="step '+st[i]+'">'+n[i]+'</div></button>';
+ }).join('')+'</section>';
+}
+function tallyChips(r){return '<div class="tally"><span class="pill">'+ic(P.heart,14)+' '+r.love+'</span><span class="pill">'+ic(P.up,14)+' '+r.like+'</span><span class="pill">'+ic(P.down,14)+' '+r.dislike+'</span></div>'}
+function rowHtml(r){
+ var mine=r.p.authorId===S.uid||r.p.taggedId===S.uid;
+ var tg=r.p.taggedId&&S.profiles.has(r.p.taggedId)?'con '+esc(nm(r.p.taggedId)):(S.profiles.get(r.p.authorId)?ROLE[S.profiles.get(r.p.authorId).role]:'');
+ return '<button class="row'+(mine?' me':'')+'" data-act="photo" data-id="'+esc(r.p.id)+'"><span class="rk">'+r.rank+'</span><img class="th" src="'+r.p.thumb+'" alt=""><span class="who"><b>'+esc(nm(r.p.authorId))+'</b><span>'+tg+'</span></span><span class="sc">'+nf.format(r.pts)+'<small>pts</small></span></button>';
+}
+function viewRanking(){
+ var ev=curEvent();
+ if(!ev)return '<div class="empty"><span class="disc"></span><h2>Todavía no hay <em>quedadas</em></h2><p>Cuando un admin cree la primera, aparecerá aquí su ranking.</p></div>';
+ var rows=rankFor(ev.id);var people=new Set(rows.map(function(r){return r.p.authorId})).size;
+ var left=ev.maxPhotos-myCount(ev.id);
+ var h=eventChips()+'<div class="head"><span class="cap">Quedada temática · '+esc(fmtDate(ev.date))+'</span><h1>'+accentTitle('Ranking',ev.name)+'</h1><div class="meta"><span class="pill'+(ev.status==='open'?'':' ink')+'">'+(ev.status==='open'?'Abierta':'Cerrada')+'</span><span class="muted">'+rows.length+(rows.length===1?' foto':' fotos')+' · '+people+(people===1?' persona':' personas')+'</span></div></div>';
+ if(!rows.length){h+='<div class="empty"><span class="disc"></span><h2>La primera foto marca el <em>listón</em></h2><p>Aún no hay nada en este ranking. Sube la tuya y anima al resto.</p></div>'}
+ else h+=podium(rows);
+ var mine=rows.filter(function(r){return r.p.authorId===S.uid});
+ if(mine.length){var b=mine[0];h+='<section class="card mine"><img class="th" src="'+b.p.thumb+'" alt=""><div><span class="cap">Tu mejor puesto</span><div class="big">#'+b.rank+' <span class="muted" style="font-size:15px;font-weight:500;letter-spacing:0">de '+rows.length+' · '+nf.format(b.pts)+' pts</span></div>'+tallyChips(b)+(mine.length>1?'<p class="note" style="margin-top:8px">Tienes '+mine.length+' fotos en este ranking.</p>':'')+'</div></section>'}
+ else if(ev.status==='open'&&rows.length){h+='<section class="card" style="margin-bottom:16px"><b>Aún no has subido foto a esta quedada.</b><p class="note">Presenta la tuya y mira en qué puesto entras.</p></section>'}
+ if(rows.length>3)h+='<h2>Clasificación</h2><div class="list">'+rows.slice(3).map(rowHtml).join('')+'</div>';
+ return h;
+}
+function budget(ev){
+ var u=usage(ev.id);
+ function b(t){var dots='';for(var i=0;i<CAP[t];i++)dots+='<span class="dot'+(i<u[t]?' off':'')+'"></span>';return '<div class="bud"><b>'+LAB[t]+'</b><span class="dots" aria-label="'+(CAP[t]-u[t])+' disponibles">'+dots+'</span></div>'}
+ return '<div class="budget">'+b('love')+b('like')+b('dislike')+'</div>';
+}
+function viewVote(){
+ var ev=curEvent();
+ if(!ev)return '<div class="empty"><span class="disc"></span><h2>Nada que <em>votar</em></h2><p>Aún no hay ninguna quedada.</p></div>';
+ var h=eventChips()+'<div class="head"><span class="cap">Quedada · '+esc(fmtDate(ev.date))+'</span><h1>'+accentTitle('Vota',ev.name)+'</h1></div>';
+ if(ev.status!=='open')return h+'<section class="card"><b>Las votaciones de esta quedada están cerradas.</b><p class="note">Mira el resultado final en la pestaña Ranking.</p></section>';
+ var feed=Array.from(S.photos.values()).filter(function(p){return p.eventId===ev.id&&p.authorId!==S.uid&&p.taggedId!==S.uid});
+ feed.sort(function(a,b){return hash(S.uid+':'+a.id)-hash(S.uid+':'+b.id)});
+ h+=budget(ev);
+ if(!feed.length)return h+'<div class="empty"><span class="disc"></span><h2>Todavía no hay fotos de <em>otros</em></h2><p>Vuelve cuando el resto suba las suyas.</p></div>';
+ var mv=myVotes(ev.id);var u=usage(ev.id);
+ h+='<div class="feed">'+feed.map(function(p){
+  var src=S.fullUrl.get(p.id)||p.thumb;var role=S.profiles.get(p.authorId)?ROLE[S.profiles.get(p.authorId).role]:'';
+  var tg=p.taggedId&&S.profiles.has(p.taggedId)?'<button class="stk" data-act="profile" data-id="'+esc(p.taggedId)+'">con '+esc(nm(p.taggedId))+'</button>':'';
+  function btn(t,icon){var sel=mv[p.id]===t;var off=!sel&&u[t]>=CAP[t];return '<button class="vb '+t+(off?' off':'')+'" data-act="vote" data-id="'+esc(p.id)+'" data-t="'+t+'" aria-pressed="'+sel+'">'+ic(icon,22)+LAB[t]+'</button>'}
+  return '<article class="vc"><div class="vimg"><img loading="lazy" data-pid="'+esc(p.id)+'" src="'+src+'" alt="Foto de '+esc(nm(p.authorId))+'"><div class="stickers"><button class="stk" data-act="profile" data-id="'+esc(p.authorId)+'">'+esc(nm(p.authorId))+' · '+role+'</button>'+tg+'</div></div><div class="vbtns">'+btn('dislike',P.down)+btn('like',P.up)+btn('love',P.heart)+'</div></article>';
+ }).join('')+'</div>';
+ return h;
+}
+function profileBlock(uid,isMe){
+ var p=S.profiles.get(uid);if(!p)return '<p>Este usuario ya no está en la comunidad.</p>';
+ var mine=Array.from(S.photos.values()).filter(function(x){return x.authorId===uid}).sort(function(a,b){return b.createdAt-a.createdAt});
+ var tagged=Array.from(S.photos.values()).filter(function(x){return x.taggedId===uid}).sort(function(a,b){return b.createdAt-a.createdAt});
+ function tile(x){var r=rankFor(x.eventId).find(function(q){return q.p.id===x.id});var e=S.events.get(x.eventId);return '<button class="tile" data-act="photo" data-id="'+esc(x.id)+'"><img src="'+x.thumb+'" alt=""><span class="stk">'+(r?'#'+r.rank+' · ':'')+esc(e?e.name:'')+'</span></button>'}
+ var contact='';
+ if(isMe){contact=S.myContact?'<div class="ctc">'+esc(S.myContact)+'<span class="note">· solo lo ven los admins</span></div>':'<p class="note">Tu contacto solo lo ven los admins.</p>'}
+ else if(S.isAdmin){var c=S.contacts.get(uid);contact=contactHtml(c)}
+ var btns=isMe?'<div class="kv"><button class="btn sm" data-act="editProfile">'+ic(P.edit,16)+' Editar perfil</button><button class="btn sm" data-act="help">'+ic(P.help,16)+' Cómo funciona</button><button class="btn sm" data-act="logout">Salir</button></div>':'';
+ return '<div class="prof"><div class="pcard">'+avatar(uid,88,'lg')+'<div><span class="cap">'+ROLE[p.role]+(S.admins.has(uid)?' · Admin':'')+'</span><h1>'+esc(p.name)+'</h1></div></div>'+
+ (p.bio?'<p style="margin:0">'+esc(p.bio)+'</p>':'')+contact+btns+
+ '<div class="sec"><h2>Fotos en <em>competición</em></h2>'+(mine.length?'<div class="grid">'+mine.map(tile).join('')+'</div>':'<p class="note">'+(isMe?'Todavía no has subido ninguna. Entra en Ranking y pulsa Subir foto.':'Aún no ha subido fotos.')+'</p>')+'</div>'+
+ (tagged.length?'<div class="sec"><h2>Aparece en</h2><div class="grid">'+tagged.map(tile).join('')+'</div></div>':'')+'</div>';
+}
+function viewPerfil(){return profileBlock(S.uid,true)}
+function contactHtml(c){
+ if(!c)return '<p class="note">Sin contacto guardado.</p>';
+ var digits=c.replace(/[^\d+]/g,'');var wa='';
+ if(/^\+?\d{9,15}$/.test(digits)){var n=digits.replace('+','');if(n.length===9)n='34'+n;wa=' <a href="https://wa.me/'+n+'" target="_blank" rel="noopener">Abrir WhatsApp</a>'}
+ return '<div class="ctc"><span>'+esc(c)+'</span><button class="btn sm" data-act="copy" data-text="'+esc(c)+'" aria-label="Copiar contacto">'+ic(P.copy,14)+'</button>'+wa+'</div>';
+}
+function viewAdmin(){
+ if(!S.isAdmin)return '';
+ var secs=[['quedadas','Quedadas'],['usuarios','Usuarios'],['fotos','Fotos']];
+ var h='<div class="head"><span class="cap">Solo admins</span><h1>Panel de <em>admin</em></h1></div><div class="seg">'+secs.map(function(s){return '<button class="chip" data-act="adminSec" data-id="'+s[0]+'" aria-pressed="'+(S.adminSec===s[0])+'">'+s[1]+'</button>'}).join('')+'</div>';
+ if(S.adminSec==='quedadas'){
+  h+='<div class="sec"><button class="btn pri" data-act="newEvent">'+ic(P.plus,18)+' Nueva quedada</button>'+
+  (evList().map(function(e){var n=Array.from(S.photos.values()).filter(function(p){return p.eventId===e.id}).length;return '<div class="arow" style="grid-template-columns:1fr auto"><div class="who"><b>'+esc(e.name)+'</b><span>'+esc(fmtDate(e.date))+' · '+n+' fotos · máx. '+e.maxPhotos+' por persona</span></div><div class="acts"><button class="btn sm" data-act="toggleEvent" data-id="'+esc(e.id)+'">'+(e.status==='open'?'Cerrar':'Reabrir')+'</button><button class="btn sm" data-act="delEvent" data-id="'+esc(e.id)+'" aria-label="Borrar quedada">'+ic(P.trash,16)+'</button></div></div>'}).join('')||'<p class="note">Aún no hay quedadas.</p>')+'</div>';
+ }
+ if(S.adminSec==='usuarios'){
+  var ps=Array.from(S.profiles.values()).sort(function(a,b){return a.name.localeCompare(b.name,'es')});
+  h+='<div class="sec"><p class="note">'+ps.length+' personas en la comunidad. Para hacer admin a alguien, escribe SI en la columna «admin» de la pestaña Usuarios de la hoja de Google. Solo tú tienes acceso a la hoja.</p>'+rulesHtml('admin')+ps.map(function(p){
+   var isAd=S.admins.has(p.id);
+   return '<div class="arow">'+avatar(p.id,48)+'<div class="who"><b>'+esc(p.name)+(isAd?' · Admin':'')+'</b><span>'+ROLE[p.role]+'</span>'+contactHtml(S.contacts.get(p.id))+'</div>'+(isAd||p.id===S.uid?'':'<div class="acts"><button class="btn sm" data-act="delUser" data-id="'+esc(p.id)+'" aria-label="Borrar usuario">'+ic(P.trash,16)+'</button></div>')+'</div>';
+  }).join('')+'</div>';
+ }
+ if(S.adminSec==='fotos'){
+  var ev=curEvent();h+=eventChips();
+  var ph=ev?Array.from(S.photos.values()).filter(function(p){return p.eventId===ev.id}).sort(function(a,b){return b.createdAt-a.createdAt}):[];
+  h+='<div class="sec">'+(ph.map(function(p){return '<div class="arow"><img class="th" src="'+p.thumb+'" alt=""><div class="who"><b>'+esc(nm(p.authorId))+'</b><span>'+(p.taggedId&&S.profiles.has(p.taggedId)?'con '+esc(nm(p.taggedId)):'sin etiqueta')+'</span></div><div class="acts"><button class="btn sm" data-act="delPhoto" data-id="'+esc(p.id)+'" aria-label="Borrar foto">'+ic(P.trash,16)+'</button></div></div>'}).join('')||'<p class="note">No hay fotos en esta quedada.</p>')+'</div>';
+ }
+ return h;
+}
+function cta(){
+ if(S.tab!=='ranking'||needsOnboard())return '';var ev=curEvent();if(!ev||ev.status!=='open')return '';
+ var left=ev.maxPhotos-myCount(ev.id);
+ return '<div class="cta">'+(left>0?'<button class="btn pri" data-act="openUpload">'+ic(P.cam,20)+' Subir foto · te quedan '+left+'</button>':'<button class="btn" disabled>Has subido tus '+ev.maxPhotos+' fotos</button>')+'</div>';
+}
+function shell(){
+ var tabs=[['ranking','Ranking',P.list],['votar','Votar',P.heart],['perfil','Perfil',P.user]];if(S.isAdmin)tabs.push(['admin','Admin',P.shield]);
+ var body;
+ if(needsOnboard())body='<div class="empty"><span class="disc"></span><h2>Bienvenide a la <em>familia</em></h2><p>Crea tu cuenta para entrar al ranking.</p></div>';
+ else if(S.tab==='votar')body=viewVote();else if(S.tab==='perfil')body=viewPerfil();else if(S.tab==='admin'&&S.isAdmin)body=viewAdmin();else body=viewRanking();
+ return header()+'<main>'+body+'</main>'+cta()+'<nav class="nav" aria-label="Principal"><div class="bar">'+tabs.map(function(t){return '<button data-act="go" data-id="'+t[0]+'"'+(S.tab===t[0]?' aria-current="page"':'')+'>'+ic(t[2],20)+t[1]+'</button>'}).join('')+'</div></nav>';
+}
+function ready(){return S.loaded}
+function authView(){
+ var reg=S.authMode==='register';
+ S.form={role:'fotografo',avatar:''};
+ return header()+'<main><div class="head"><span class="cap">Comunidad FOMO Sevilla</span><h1>'+(reg?'Crea tu <em>cuenta</em>':'Entra al <em>ranking</em>')+'</h1></div>'+
+ '<div class="seg"><button class="chip" data-act="authMode" data-id="login" aria-pressed="'+(!reg)+'">Ya tengo cuenta</button><button class="chip" data-act="authMode" data-id="register" aria-pressed="'+reg+'">Crear cuenta</button></div>'+
+ '<form class="sec" id="auth-form" onsubmit="return false" style="gap:16px">'+
+ (reg?'<div class="field"><label for="f-code">Código de la comunidad</label><input id="f-code" maxlength="40" autocomplete="off" autocapitalize="none"><span class="hint">Te lo da un admin de FOMO.</span></div>':'')+
+ '<div class="field"><label for="f-name">Nombre</label><input id="f-name" maxlength="40" autocomplete="username"></div>'+
+ '<div class="field"><label for="f-pin">PIN (4 a 6 números)</label><input id="f-pin" type="password" inputmode="numeric" maxlength="6" autocomplete="'+(reg?'new-password':'current-password')+'"><span class="hint">'+(reg?'Con tu nombre y este PIN entrarás desde cualquier móvil. No lo compartas.':'El que elegiste al crear la cuenta.')+'</span></div>'+
+ (reg?
+  '<div class="avpick"><span id="f-prev"><span class="av" style="width:72px;height:72px;font-size:28px">?</span></span><div><label class="btn sm" for="f-avatar">'+ic(P.cam,16)+' Foto de perfil</label><input id="f-avatar" type="file" accept="image/*" hidden></div></div>'+
+  '<div class="field"><span class="lbl">Soy</span><div class="roles" role="group"><button type="button" class="role" data-act="pickRole" data-id="fotografo" aria-pressed="true">Fotógrafo/a</button><button type="button" class="role" data-act="pickRole" data-id="modelo" aria-pressed="false">Modelo</button></div></div>'+
+  '<div class="field"><label for="f-bio">Descripción corta</label><textarea id="f-bio" maxlength="160" placeholder="Retrato y calle, Sevilla. Siempre con ganas de quedar."></textarea></div>'+
+  '<div class="field"><label for="f-contact">WhatsApp o teléfono</label><input id="f-contact" maxlength="60" inputmode="tel" placeholder="+34 600 000 000 o @usuario"><span class="hint">Solo lo ven los admins, para tener localizada a la gente.</span></div>'+rulesHtml('signup'):'')+
+ '<p id="f-err" class="err" hidden></p><button class="btn pri wide" id="f-go" data-act="auth">'+(reg?'Crear mi cuenta':'Entrar')+'</button></form></main>';
+}
+var io=null;
+function draw(){
+ var root=$('#app');var h;
+ if(S.fatal)h='<div class="app" style="padding-top:48px"><div class="empty"><span class="disc"></span><h2>No se puede <em>abrir</em></h2><p>'+esc(S.fatal)+'</p></div></div>';
+ else if(S.netErr&&!S.loaded)h='<div class="app" style="padding-top:48px"><div class="empty"><span class="disc"></span><h2>Sin <em>conexión</em></h2><p>'+esc(S.netErr)+'</p><button class="btn brand" data-act="reload">Reintentar</button></div></div>';
+ else if(!S.loaded)h='<div class="app">'+header()+'<div class="empty"><span class="disc"></span><h2>Cargando el <em>ranking</em></h2><p>Un momento…</p></div></div>';
+ else if(!S.uid)h='<div class="app">'+authView()+'</div>';
+ else h='<div class="app">'+shell()+'</div>';
+ var key=S.fatal?'f':S.netErr&&!S.loaded?'n':!S.loaded?'l':!S.uid?'a:'+S.authMode:'m';
+ if(key!==S.viewKey){S.viewKey=key;S.anim=true}
+ if(h!==S.lastHtml){S.lastHtml=h;root.innerHTML=h;
+  if(S.anim){var mn=root.querySelector('main');if(mn)mn.classList.add('enter');S.anim=false}
+  if(S.pop){var pp=S.pop.split('|');root.querySelectorAll('.vb[aria-pressed="true"]').forEach(function(b){if(b.dataset.id===pp[0]&&b.dataset.t===pp[1])b.classList.add('pop')});S.pop=null}
+ }
+}
+function loadFull(id){return Promise.resolve(S.fullUrl.get(id)||'')}
+
+/* ---------- hojas (sheets) ---------- */
+function openSheet(s){S.sheet=s;drawSheet()}
+function closeSheet(){S.sheet=null;drawSheet()}
+function sheetHead(title,closable){return '<div class="shead"><h2>'+title+'</h2>'+(closable===false?'':'<button class="iconbtn" data-act="closeSheet" aria-label="Cerrar">'+ic(P.x)+'</button>')+'</div>'}
+function drawSheet(){
+ var el=$('#sheet');var s=S.sheet;
+ if(!s){el.innerHTML='';document.body.style.overflow='';return}
+ var body='',closable=true;
+ if(s.type==='help')body=helpSheet();
+ else if(s.type==='photo')body=photoSheet(s.id);
+ else if(s.type==='profile')body=sheetHead('Perfil')+profileBlock(s.id,s.id===S.uid);
+ else if(s.type==='upload')body=uploadSheet();
+ else if(s.type==='event')body=eventSheet();
+ else if(s.type==='onboard'||s.type==='edit'){closable=s.type==='edit';body=profileForm(s.type)}
+ el.innerHTML='<div class="scrim"'+(closable?' data-act="closeSheet"':'')+'></div><div class="panel" role="dialog" aria-modal="true">'+body+'</div>';
+ document.body.style.overflow='hidden';
+ if(s.type==='upload')renderTagList();
+ if(s.type==='photo'){loadFull(s.id).then(function(u){var i=document.getElementById('pimg');if(u&&i&&S.sheet&&S.sheet.id===s.id)i.src=u})}
+}
+function rulesHtml(mode){
+ var intro=mode==='admin'?'Elimina cuentas o fotos solo por estos motivos:':'Los admins pueden eliminar una cuenta o una foto si:';
+ return '<div class="rules"><b>Normas de la familia</b><span>'+intro+'</span><ul><li>la cuenta no es real,</li><li>se suben fotos inapropiadas,</li><li>vemos cualquier otra señal de abuso de las funciones de la app, como manipular los votos.</li></ul>'+(mode==='signup'?'<span>Al crear tu cuenta aceptas estas normas.</span>':'<span>Así cuidamos el respeto, la educación y el compañerismo de la comunidad.</span>')+'</div>';
+}
+function helpSheet(){
+ var ev=curEvent();var mx=ev?ev.maxPhotos:3;
+ return sheetHead('Así funciona el <em>ranking</em>')+'<p style="margin:0">Es un juego de la comunidad. Aquí mandan las fotos buenas y el apoyo mutuo, no la competitividad.</p>'+
+ '<ol class="steps">'+
+ '<li><div><b>Tu cuenta</b>Entras con tu nombre y un PIN. Tu foto, una frase sobre ti y si eres fotógrafo/a o modelo. Tu WhatsApp o teléfono solo lo ven los admins.</div></li>'+
+ '<li><div><b>Un ranking por quedada</b>Cada quedada temática tiene el suyo. Empezamos con Halloween el 17 de octubre. Puedes subir hasta '+mx+' fotos por quedada.</div></li>'+
+ '<li><div><b>Etiqueta a tu pareja de sesión</b>Si eres fotógrafo/a, etiqueta a la modelo. Si eres modelo, al fotógrafo/a. La foto sale también en su perfil.</div></li>'+
+ '<li><div><b>Vota las fotos del resto</b>En cada ranking tienes 1 Me encanta, 2 Me gusta y 1 No me gusta. Si quieres cambiar un voto, púlsalo otra vez y repártelo de nuevo. No se pueden votar las fotos propias ni las que te etiquetan.</div></li>'+
+ '<li><div><b>Puntos y puesto</b>Me encanta suma 3, Me gusta suma 1 y No me gusta resta 1. En la pestaña Ranking ves tu puesto y cómo va todo el mundo. Cuando un admin cierra la quedada, el resultado queda fijado.</div></li></ol>'+
+ rulesHtml()+'<button class="btn pri wide" data-act="closeSheet">Entendido</button>';
+}
+function photoSheet(id){
+ var p=S.photos.get(id);if(!p)return sheetHead('Foto')+'<p>Esta foto ya no está.</p>';
+ var r=rankFor(p.eventId).find(function(q){return q.p.id===id});var e=S.events.get(p.eventId);
+ var canDel=p.authorId===S.uid||S.isAdmin;
+ var tg=p.taggedId&&S.profiles.has(p.taggedId)?'<button class="stk" data-act="profile" data-id="'+esc(p.taggedId)+'">con '+esc(nm(p.taggedId))+'</button>':'';
+ return sheetHead(r?'Puesto <em>#'+r.rank+'</em>':'Foto')+
+ '<img id="pimg" class="pimg" src="'+(S.fullUrl.get(id)||p.thumb)+'" alt="Foto de '+esc(nm(p.authorId))+'">'+
+ '<div class="kv"><button class="stk" data-act="profile" data-id="'+esc(p.authorId)+'">'+esc(nm(p.authorId))+'</button>'+tg+'<span class="pill">'+esc(e?e.name:'')+'</span></div>'+
+ (r?'<div><div class="big">'+nf.format(r.pts)+' <span class="muted" style="font-size:15px;font-weight:500;letter-spacing:0">puntos</span></div>'+tallyChips(r)+'</div>':'')+
+ (canDel?'<button class="btn wide" data-act="delPhoto" data-id="'+esc(id)+'" data-close="1">'+ic(P.trash,16)+' Eliminar foto</button>':'');
+}
+function profileForm(type){
+ var edit=type==='edit';var p=edit?me():null;
+ S.form={role:p?p.role:'fotografo',avatar:'',avatarPrev:p?p.avatar:''};
+ return sheetHead(edit?'Edita tu <em>perfil</em>':'Crea tu <em>cuenta</em>',edit)+
+ (edit?'':'<p style="margin:0">Cuéntanos quién eres para entrar al ranking de la comunidad.</p>')+
+ '<div class="avpick"><span id="f-prev">'+(S.form.avatarPrev?'<img class="av" style="width:72px;height:72px" src="'+S.form.avatarPrev+'" alt="">':'<span class="av" style="width:72px;height:72px;font-size:28px">?</span>')+'</span><div><label class="btn sm" for="f-avatar">'+ic(P.cam,16)+' Foto de perfil</label><input id="f-avatar" type="file" accept="image/*" hidden></div></div>'+
+ '<div class="field"><label for="f-name">Nombre</label><input id="f-name" maxlength="40" autocomplete="name" value="'+esc(p?p.name:S.meName)+'"></div>'+
+ '<div class="field"><span class="lbl">Soy</span><div class="roles" role="group"><button type="button" class="role" data-act="pickRole" data-id="fotografo" aria-pressed="'+(S.form.role==='fotografo')+'">Fotógrafo/a</button><button type="button" class="role" data-act="pickRole" data-id="modelo" aria-pressed="'+(S.form.role==='modelo')+'">Modelo</button></div></div>'+
+ '<div class="field"><label for="f-bio">Descripción corta</label><textarea id="f-bio" maxlength="160" placeholder="Retrato y calle, Sevilla. Siempre con ganas de quedar.">'+esc(p?p.bio:'')+'</textarea></div>'+
+ '<div class="field"><label for="f-contact">WhatsApp o teléfono</label><input id="f-contact" maxlength="60" inputmode="tel" placeholder="+34 600 000 000 o @usuario" value="'+esc(edit&&S.myContact?S.myContact:'')+'"><span class="hint">Solo lo ven los admins, para tener localizada a la gente.'+(edit&&!S.myContact?' Déjalo vacío para mantener el que ya tienes.':'')+'</span></div>'+
+ (edit?'':rulesHtml('signup'))+'<p id="f-err" class="err" hidden></p><button class="btn pri wide" id="f-go" data-act="saveProfile">'+(edit?'Guardar cambios':'Crear mi cuenta')+'</button>';
+}
+function uploadSheet(){
+ var ev=curEvent();var m=me();var left=ev.maxPhotos-myCount(ev.id);
+ S.up={full:'',thumb:'',taggedId:null,busy:false,q:''};
+ var who=m&&m.role==='fotografo'?'¿Con qué modelo la hiciste?':'¿Con qué fotógrafo/a la hiciste?';
+ return sheetHead('Sube tu <em>foto</em>')+'<p class="note" style="margin-top:-8px">Ranking '+esc(ev.name)+' · te quedan '+left+' de '+ev.maxPhotos+'</p>'+
+ '<label class="drop" for="up-file"><span id="up-prev">'+ic(P.cam,32)+'<br><b>Elige una foto</b><br><span class="note">Desde tu galería o con la cámara</span></span></label><input id="up-file" type="file" accept="image/*" hidden>'+
+ '<div class="field"><label for="up-q">'+who+'</label><input id="up-q" placeholder="Busca por nombre (opcional)" autocomplete="off"><div id="up-list" class="taglist"></div></div>'+
+ '<p class="note">Las fotos inapropiadas se eliminan y pueden suponer la baja de la cuenta.</p><p id="up-err" class="err" hidden></p><button class="btn pri wide" id="up-go" data-act="submitPhoto" disabled>Presentar al ranking</button>';
+}
+function renderTagList(){
+ var m=me();var want=m&&m.role==='fotografo'?'modelo':'fotografo';var q=(S.up.q||'').toLowerCase();
+ var l=Array.from(S.profiles.values()).filter(function(p){return p.id!==S.uid&&p.role===want&&p.name.toLowerCase().indexOf(q)>-1}).sort(function(a,b){return a.name.localeCompare(b.name,'es')});
+ var el=document.getElementById('up-list');if(!el)return;
+ el.innerHTML='<button type="button" class="tagopt" data-act="tag" data-id="" aria-pressed="'+(!S.up.taggedId)+'"><b>Sin etiquetar</b></button>'+l.map(function(p){return '<button type="button" class="tagopt" data-act="tag" data-id="'+esc(p.id)+'" aria-pressed="'+(S.up.taggedId===p.id)+'">'+avatar(p.id,32)+'<b>'+esc(p.name)+'</b></button>'}).join('')+(l.length?'':'<p class="note">Nadie coincide con esa búsqueda.</p>');
+}
+function eventSheet(){
+ return sheetHead('Nueva <em>quedada</em>')+
+ '<div class="field"><label for="e-name">Nombre</label><input id="e-name" maxlength="40" placeholder="Halloween"></div>'+
+ '<div class="field"><label for="e-date">Fecha</label><input id="e-date" type="date"></div>'+
+ '<div class="field"><label for="e-max">Fotos máximas por persona</label><input id="e-max" type="number" min="1" max="10" value="3"></div>'+
+ '<p id="e-err" class="err" hidden></p><button class="btn pri wide" data-act="saveEvent">Crear quedada</button>';
+}
+
+/* ---------- imágenes ---------- */
+async function loadBmp(file){try{return await createImageBitmap(file,{imageOrientation:'from-image'})}catch(e){return await new Promise(function(res,rej){var u=URL.createObjectURL(file);var i=new Image();i.onload=function(){res(i)};i.onerror=rej;i.src=u})}}
+function encode(src,max,q,limit,square){
+ var sw=src.width,sh=src.height,sx=0,sy=0;
+ if(square){var s=Math.min(sw,sh);sx=(sw-s)/2;sy=(sh-s)/2;sw=s;sh=s}
+ var k=Math.min(1,max/Math.max(sw,sh));var w=Math.round(sw*k),h=Math.round(sh*k);
+ var c=document.createElement('canvas'),x=c.getContext('2d');var url='';
+ for(var tries=0;tries<12;tries++){c.width=w;c.height=h;x.fillStyle='#fff';x.fillRect(0,0,w,h);x.drawImage(src,sx,sy,sw,sh,0,0,w,h);url=c.toDataURL('image/jpeg',q);if(url.length<=limit)return url;if(q>0.5)q-=0.08;else{w=Math.round(w*.85);h=Math.round(h*.85)}}
+ return url.length<=limit?url:'';
+}
+
+/* ---------- acciones ---------- */
+function showErr(id,m){var e=document.getElementById(id);if(e){e.textContent=m;e.hidden=false}}
+async function doAuth(){
+ var reg=S.authMode==='register';
+ var name=$('#f-name').value.trim(),pin=$('#f-pin').value.trim();
+ if(name.length<2)return showErr('f-err','Escribe tu nombre (mínimo 2 letras).');
+ if(!/^\d{4,6}$/.test(pin))return showErr('f-err','El PIN son entre 4 y 6 números.');
+ var req={action:reg?'register':'login',nombre:name,pin:pin};
+ if(reg){
+  var code=$('#f-code').value.trim(),contact=$('#f-contact').value.trim();
+  if(!code)return showErr('f-err','Pide el código de la comunidad a un admin.');
+  if(contact.length<6)return showErr('f-err','Añade tu WhatsApp o teléfono. Solo lo ven los admins.');
+  req.code=code;req.rol=S.form.role;req.bio=$('#f-bio').value.trim();req.contacto=contact;req.avatar=S.form.avatar||'';
+ }
+ var btn=$('#f-go');btn.disabled=true;btn.textContent=reg?'Creando…':'Entrando…';
+ var r=await api(req);
+ if(!r.ok){btn.disabled=false;btn.textContent=reg?'Crear mi cuenta':'Entrar';return showErr('f-err',r.error||'No se pudo completar.')}
+ S.token=r.token;saveToken(r.token);S.loaded=false;render();
+ var ok=await refresh();
+ if(ok&&S.uid){S.tab='ranking';toast(reg?'Cuenta creada. ¡Bienvenide!':'¡Hola otra vez!');setInterval(function(){if(S.uid&&!document.hidden)refresh(true)},20000);if(reg)setTimeout(function(){openSheet({type:'help'})},300)}
+}
+async function saveProfile(){
+ var name=$('#f-name').value.trim(),bio=$('#f-bio').value.trim(),contact=$('#f-contact').value.trim();
+ if(name.length<2)return showErr('f-err','Escribe tu nombre (mínimo 2 letras).');
+ if(contact&&contact.length<6)return showErr('f-err','Ese contacto parece demasiado corto.');
+ var btn=$('#f-go');btn.disabled=true;btn.textContent='Guardando…';
+ var req={action:'updateProfile',nombre:name,rol:S.form.role,bio:bio};
+ if(contact)req.contacto=contact;if(S.form.avatar)req.avatar=S.form.avatar;
+ var r=await api(req);
+ if(!r.ok){btn.disabled=false;btn.textContent='Guardar cambios';return showErr('f-err',r.error||'No se pudo guardar.')}
+ await refresh();closeSheet();toast('Perfil actualizado.');
+}
+async function submitPhoto(){
+ var ev=curEvent();if(!ev||ev.status!=='open')return;
+ if(myCount(ev.id)>=ev.maxPhotos)return showErr('up-err','Ya has subido el máximo de fotos a esta quedada.');
+ if(!S.up.full||S.up.busy)return;
+ var btn=$('#up-go');btn.disabled=true;btn.textContent='Subiendo…';S.up.busy=true;
+ var r=await api({action:'upload',evento:ev.id,etiquetado:S.up.taggedId||'',foto:S.up.full});
+ if(!r.ok){S.up.busy=false;btn.disabled=false;btn.textContent='Presentar al ranking';return showErr('up-err',r.error||'No se pudo subir la foto. Inténtalo otra vez.')}
+ await refresh();closeSheet();S.tab='ranking';render();
+ setTimeout(function(){var rows=rankFor(ev.id);var q=rows.find(function(x){return x.p.id===r.id});toast(q?'Foto presentada. Vas el nº '+q.rank+' de '+rows.length+'.':'Foto presentada.')},500);
+}
+function castVote(pid,t){
+ var ev=curEvent();if(!ev||ev.status!=='open')return toast('Esta quedada está cerrada.');
+ var p=S.photos.get(pid);if(!p||p.authorId===S.uid||p.taggedId===S.uid)return;
+ var cur=myVotes(ev.id);var next=cur[pid]===t?null:t;
+ if(next){var u=usage(ev.id);if(cur[pid])u[cur[pid]]--;if(u[next]>=CAP[next])return toast('Ya has usado tu '+(CAP[next]>1?CAP[next]+' ':'')+'"'+LAB[next]+'". Quita uno para repartirlo de nuevo.')}
+ var c=S.counts[pid]=S.counts[pid]||{love:0,like:0,dislike:0};
+ if(cur[pid])c[cur[pid]]=Math.max(0,(c[cur[pid]]||0)-1);
+ if(next){c[next]=(c[next]||0)+1;S.myVotesMap[pid]=next}else delete S.myVotesMap[pid];
+ S.cache={};S.pop=next?pid+'|'+next:null;render();
+ S.pending++;
+ api({action:'vote',evento:ev.id,foto:pid,tipo:next}).then(function(r){
+  S.pending--;
+  if(r.ok){if(S.pending===0){S.counts=r.counts||S.counts;S.myVotesMap=r.myVotes||S.myVotesMap;S.cache={};render()}}
+  else{toast(r.error||'No se pudo guardar tu voto.');if(S.pending===0)refresh()}
+ });
+}
+async function deletePhoto(id){var r=await api({action:'deletePhoto',id:id});if(!r.ok){toast(r.error||'No se pudo borrar la foto.');return false}await refresh();return true}
+async function deleteUser(uid){var r=await api({action:'deleteUser',id:uid});if(!r.ok)return toast(r.error||'No se pudo eliminar al usuario.');await refresh();toast('Usuario eliminado.')}
+async function deleteEvent(id){var r=await api({action:'deleteEvent',id:id});if(!r.ok)return toast(r.error||'No se pudo eliminar la quedada.');await refresh();toast('Quedada eliminada.')}
+async function saveEvent(){
+ var name=$('#e-name').value.trim(),date=$('#e-date').value,mx=clamp(parseInt($('#e-max').value,10)||3,1,10);
+ if(name.length<2)return showErr('e-err','Ponle un nombre a la quedada.');
+ if(!date)return showErr('e-err','Elige la fecha de la quedada.');
+ var r=await api({action:'createEvent',nombre:name,fecha:date,max:mx});
+ if(!r.ok)return showErr('e-err',r.error||'No se pudo crear la quedada.');
+ await refresh();S.eventId=r.id;closeSheet();toast('Quedada creada.');
+}
+function arm(el,act,label){
+ if(el.dataset.armed){return true}
+ el.dataset.armed='1';el.dataset.orig=el.innerHTML;el.innerHTML=label;el.classList.add('armed');
+ setTimeout(function(){if(el.isConnected&&el.dataset.armed){delete el.dataset.armed;el.innerHTML=el.dataset.orig;el.classList.remove('armed')}},4000);
+ return false;
+}
+var A={
+ go:function(el){S.tab=el.dataset.id;window.scrollTo(0,0);S.lastHtml=null;S.anim=true;render()},
+ event:function(el){S.eventId=el.dataset.id;S.anim=true;render()},
+ theme:function(){S.theme=S.theme==='dark'?'light':'dark';applyTheme(S.theme);try{localStorage.setItem('fomo-theme',S.theme)}catch(e){}S.lastHtml=null;render()},
+ help:function(){openSheet({type:'help'})},
+ closeSheet:function(){closeSheet()},
+ photo:function(el){openSheet({type:'photo',id:el.dataset.id})},
+ profile:function(el){openSheet({type:'profile',id:el.dataset.id})},
+ editProfile:function(){openSheet({type:'edit'})},
+ pickRole:function(el){S.form.role=el.dataset.id;document.querySelectorAll('.role').forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.id===S.form.role))})},
+ saveProfile:function(){saveProfile()},
+ openUpload:function(){var ev=curEvent();if(!ev||ev.status!=='open')return;if(myCount(ev.id)>=ev.maxPhotos)return toast('Ya has subido el máximo de fotos.');openSheet({type:'upload'})},
+ tag:function(el){S.up.taggedId=el.dataset.id||null;renderTagList()},
+ submitPhoto:function(){submitPhoto()},
+ vote:function(el){castVote(el.dataset.id,el.dataset.t)},
+ adminSec:function(el){S.adminSec=el.dataset.id;render()},
+ newEvent:function(){openSheet({type:'event'})},
+ saveEvent:function(){saveEvent()},
+ toggleEvent:function(el){var e=S.events.get(el.dataset.id);if(e)api({action:'setEvent',id:e.id,estado:e.status==='open'?'closed':'open'}).then(function(r){if(r.ok)refresh();else toast(r.error||'No se pudo cambiar el estado.')})},
+ auth:function(){doAuth()},
+ authMode:function(el){S.authMode=el.dataset.id;S.lastHtml=null;render()},
+ logout:function(){saveToken('');S.token='';S.uid=null;S.isAdmin=false;S.tab='ranking';S.photos=new Map();S.sheet=null;drawSheet();S.lastHtml=null;render()},
+ reload:function(){S.netErr='';render();refresh()},
+ delEvent:function(el){if(arm(el,'delEvent','Borrar y quitar sus fotos')){deleteEvent(el.dataset.id)}},
+ delUser:function(el){if(arm(el,'delUser','Confirmar')){deleteUser(el.dataset.id)}},
+ delPhoto:function(el){if(arm(el,'delPhoto',el.dataset.close?'Pulsa otra vez para borrar':'Confirmar')){deletePhoto(el.dataset.id).then(function(ok){if(ok&&el.dataset.close)closeSheet()})}},
+ copy:function(el){var t=el.dataset.text;var done=function(){toast('Copiado.')};if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(done,function(){toast(t)})}else toast(t)}
+};
+document.addEventListener('click',function(e){var el=e.target.closest('[data-act]');if(!el)return;var f=A[el.dataset.act];if(f){f(el,e)}});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&S.sheet&&S.sheet.type!=='onboard')closeSheet()});
+document.addEventListener('input',function(e){if(e.target.id==='up-q'){S.up.q=e.target.value;renderTagList()}});
+document.addEventListener('change',function(e){
+ var t=e.target;var f=t.files&&t.files[0];if(!f)return;
+ if(t.id==='f-avatar'){
+  loadBmp(f).then(function(b){var d=encode(b,256,.8,45000,true);if(!d)return showErr('f-err','No se pudo preparar esa foto.');S.form.avatar=d;document.getElementById('f-prev').innerHTML='<img class="av" style="width:72px;height:72px" src="'+dataToUrl(d)+'" alt="">'}).catch(function(){showErr('f-err','No se pudo leer esa imagen.')});
+ }
+ if(t.id==='up-file'){
+  var prev=document.getElementById('up-prev'),go=document.getElementById('up-go');prev.innerHTML='Preparando foto…';go.disabled=true;
+  loadBmp(f).then(function(b){var full=encode(b,1100,.84,185000),th=encode(b,360,.72,32000);if(!full||!th){prev.innerHTML='<b>Esa foto es demasiado pesada.</b><br>Prueba con otra.';return}S.up.full=full;S.up.thumb=th;prev.innerHTML='<img src="'+dataToUrl(full)+'" alt="Vista previa"><br><span class="note">Toca para cambiar la foto</span>';go.disabled=false}).catch(function(){prev.innerHTML='<b>No se pudo leer esa imagen.</b><br>Prueba con otra.'});
+ }
+});
+
+/* ---------- datos (Google Sheets vía Apps Script) ---------- */
+var CFG=window.FOMO_CONFIG||{};
+var TOKEN_KEY='fomo-token';
+function gimg(id,w){return id?'https://lh3.googleusercontent.com/d/'+encodeURIComponent(id)+'=w'+w:''}
+function saveToken(t){try{if(t)localStorage.setItem(TOKEN_KEY,t);else localStorage.removeItem(TOKEN_KEY)}catch(e){}}
+async function api(req){
+ if(S.token&&!req.token)req.token=S.token;
+ try{
+  var res=await fetch(CFG.API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(req)});
+  return await res.json();
+ }catch(e){return {ok:false,code:'network',error:'No hay conexión con el servidor. Inténtalo otra vez.'}}
+}
+function applyState(r){
+ if(!r.me){ if(S.token){saveToken('');S.token=''} S.uid=null; S.isAdmin=false; S.loaded=true; S.netErr=''; return }
+ S.uid=r.me.id;S.isAdmin=!!r.me.admin;S.myContact=r.me.contacto||undefined;S.meName=r.me.nombre||'';
+ var pm=new Map(),ad=new Set(),ct=new Map();
+ (r.users||[]).forEach(function(u){
+  pm.set(u.id,{id:u.id,name:str(u.nombre,40),role:u.rol==='modelo'?'modelo':'fotografo',bio:str(u.bio,200),avatar:gimg(u.avatar,160),createdAt:+u.creado||0});
+  if(u.admin)ad.add(u.id);if(u.contacto)ct.set(u.id,str(u.contacto,80));
+ });
+ var em=new Map();(r.events||[]).forEach(function(e){em.set(e.id,{id:e.id,name:str(e.nombre,40)||'Quedada',date:str(e.fecha,10),status:e.estado==='closed'?'closed':'open',maxPhotos:clamp(+e.max||3,1,10)})});
+ var ph=new Map();(r.photos||[]).forEach(function(f){var t=gimg(f.archivo,420);if(!t)return;ph.set(f.id,{id:f.id,eventId:f.evento,authorId:f.autor,taggedId:f.etiquetado||null,thumb:t,createdAt:+f.creado||0});S.fullUrl.set(f.id,gimg(f.archivo,1100))});
+ S.profiles=pm;S.admins=ad;S.contacts=ct;S.events=em;S.photos=ph;S.counts=r.counts||{};S.myVotesMap=r.myVotes||{};
+ S.loaded=true;S.netErr='';S.cache={};
+}
+async function refresh(quiet){
+ var r=await api({action:'state'});
+ if(!r.ok){if(!S.loaded)S.netErr=r.error||'No se pudo cargar.';if(!quiet)render();return false}
+ if(S.pending>0)return true;
+ applyState(r);render();return true;
+}
+function boot(){
+ render();
+ if(!CFG.API||/PEGA|TU_URL/i.test(CFG.API)){S.fatal='Falta configurar la dirección de la hoja de Google (archivo config.js).';return render()}
+ try{S.token=localStorage.getItem(TOKEN_KEY)||''}catch(e){S.token=''}
+ if(!S.token){S.loaded=true;return render()}
+ refresh();
+ setInterval(function(){if(S.uid&&!document.hidden)refresh(true)},20000);
+ document.addEventListener('visibilitychange',function(){if(S.uid&&!document.hidden)refresh(true)});
+}
+boot();
+})();
+</script>
+</body>
+</html>
