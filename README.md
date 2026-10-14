@@ -2,7 +2,7 @@
 
 Ranking interno de fotógrafos y modelos de FOMO Sevilla. Una quedada = un ranking.
 
-- **Web**: carpeta `web/` (HTML estático, se publica con GitHub Pages).
+- **Web**: carpeta `docs/` (HTML estático, se publica con GitHub Pages).
 - **Base de datos**: una Hoja de cálculo de Google (usuarios, quedadas, fotos, votos).
 - **Servidor**: `apps-script/Code.gs`, un Google Apps Script que lee y escribe en la hoja y guarda las fotos en una carpeta de Drive.
 
@@ -18,8 +18,8 @@ Los teléfonos solo los reciben las cuentas con `SI` en la columna `admin` de la
 4. **Implementar → Nueva implementación → Aplicación web**: *Ejecutar como*: **Yo**, *Quién tiene acceso*: **Cualquier persona**. Copia la URL que termina en `/exec`.
 
 ### 2. La web
-1. Abre `web/config.js` y pega esa URL en `API`.
-2. Sube el repositorio a GitHub. En **Settings → Pages** elige *Deploy from a branch*, rama `main` y carpeta `/ (root)` si subes solo el contenido de `web/`, o usa el workflow incluido (`.github/workflows/pages.yml`), que publica `web/` automáticamente: en Settings → Pages elige *Source: GitHub Actions*.
+1. Abre `docs/config.js` y pega esa URL en `API`.
+2. Sube el repositorio a GitHub. En **Settings → Pages** elige *Deploy from a branch*, rama `main`, carpeta `/docs`, y guarda.
 3. La web queda en `https://TU-USUARIO.github.io/NOMBRE-DEL-REPO/`.
 
 ### 3. Hacerte admin
