@@ -2,7 +2,7 @@
 const http = require('http'), fs = require('fs'), path = require('path');
 const { makeEnv } = require('../apps-script/test/mock');
 const env = makeEnv(); env.ctx.setup();
-const WEB = path.join(__dirname, '..', 'web');
+const WEB = path.join(__dirname, '..', 'docs');
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.png': 'image/png' };
 const PORT = process.env.PORT || 8123;
 http.createServer((req, res) => {

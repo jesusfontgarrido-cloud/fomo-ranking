@@ -99,6 +99,8 @@ h2{font-size:22px}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:2px solid var(--line);border-radius:var(--r-full);padding:10px 20px;min-height:44px;font-weight:600;background:var(--card);color:var(--text)}
 .btn.pri{background:var(--pri-bg);color:var(--pri-text);border-color:var(--pri-bg)}
 .btn.brand{background:var(--brand)}
+.btn.ig{justify-self:start;text-decoration:none;color:var(--ink);max-width:100%}
+.btn.ig b{font-weight:600;overflow:hidden;text-overflow:ellipsis}
 .btn.sm{min-height:36px;padding:6px 14px;font-size:13px}
 .btn.wide{width:100%}
 .btn[disabled]{opacity:.5;cursor:not-allowed}
@@ -228,6 +230,7 @@ var nf=new Intl.NumberFormat('es-ES');
 var $=function(s){return document.querySelector(s)};
 var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
 var str=function(v,n){return typeof v==='string'?v.slice(0,n):''};
+var igNorm=function(s){var v=String(s||'').trim().replace(/^(https?:\/\/)?(www\.)?instagram\.com\//i,'').replace(/^@+/,'').split(/[\/?#]/)[0];return /^[A-Za-z0-9._]{1,30}$/.test(v)?v.toLowerCase():''};
 var clamp=function(n,a,b){return Math.max(a,Math.min(b,n))};
 var okImg=function(s){return typeof s==='string'&&/^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(s)?s:''};
 function ic(d,s){s=s||20;return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+d+'</svg>'}
@@ -246,6 +249,7 @@ copy:'<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 
 help:'<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>',
 edit:'<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
 sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',
+insta:'<rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><path d="M17.5 6.5h.01"/>',
 moon:'<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>'
 };
 
@@ -369,7 +373,7 @@ function profileBlock(uid,isMe){
  else if(S.isAdmin){var c=S.contacts.get(uid);contact=contactHtml(c)}
  var btns=isMe?'<div class="kv"><button class="btn sm" data-act="editProfile">'+ic(P.edit,16)+' Editar perfil</button><button class="btn sm" data-act="help">'+ic(P.help,16)+' Cómo funciona</button><button class="btn sm" data-act="logout">Salir</button></div>':'';
  return '<div class="prof"><div class="pcard">'+avatar(uid,88,'lg')+'<div><span class="cap">'+ROLE[p.role]+(S.admins.has(uid)?' · Admin':'')+'</span><h1>'+esc(p.name)+'</h1></div></div>'+
- (p.bio?'<p style="margin:0">'+esc(p.bio)+'</p>':'')+contact+btns+
+ (p.bio?'<p style="margin:0">'+esc(p.bio)+'</p>':'')+(p.instagram?'<a class="btn brand ig" href="https://www.instagram.com/'+esc(p.instagram)+'/" target="_blank" rel="noopener noreferrer">'+ic(P.insta,18)+' Ver Instagram <b>@'+esc(p.instagram)+'</b></a>':(isMe?'<p class="note">Añade tu Instagram en Editar perfil y la gente podrá ir a verlo con un botón.</p>':''))+contact+btns+
  '<div class="sec"><h2>Fotos en <em>competición</em></h2>'+(mine.length?'<div class="grid">'+mine.map(tile).join('')+'</div>':'<p class="note">'+(isMe?'Todavía no has subido ninguna. Entra en Ranking y pulsa Subir foto.':'Aún no ha subido fotos.')+'</p>')+'</div>'+
  (tagged.length?'<div class="sec"><h2>Aparece en</h2><div class="grid">'+tagged.map(tile).join('')+'</div></div>':'')+'</div>';
 }
@@ -428,6 +432,7 @@ function authView(){
   '<div class="avpick"><span id="f-prev"><span class="av" style="width:72px;height:72px;font-size:28px">?</span></span><div><label class="btn sm" for="f-avatar">'+ic(P.cam,16)+' Foto de perfil</label><input id="f-avatar" type="file" accept="image/*" hidden></div></div>'+
   '<div class="field"><span class="lbl">Soy</span><div class="roles" role="group"><button type="button" class="role" data-act="pickRole" data-id="fotografo" aria-pressed="true">Fotógrafo/a</button><button type="button" class="role" data-act="pickRole" data-id="modelo" aria-pressed="false">Modelo</button></div></div>'+
   '<div class="field"><label for="f-bio">Descripción corta</label><textarea id="f-bio" maxlength="160" placeholder="Retrato y calle, Sevilla. Siempre con ganas de quedar."></textarea></div>'+
+  '<div class="field"><label for="f-insta">Instagram (opcional)</label><input id="f-insta" maxlength="60" autocapitalize="none" autocomplete="off" placeholder="@tuusuario"><span class="hint">Se verá en tu perfil como botón directo a tu Instagram. Es público para toda la comunidad.</span></div>'+
   '<div class="field"><label for="f-contact">WhatsApp o teléfono</label><input id="f-contact" maxlength="60" inputmode="tel" placeholder="+34 600 000 000 o @usuario"><span class="hint">Solo lo ven los admins, para tener localizada a la gente.</span></div>'+rulesHtml('signup'):'')+
  '<p id="f-err" class="err" hidden></p><button class="btn pri wide" id="f-go" data-act="auth">'+(reg?'Crear mi cuenta':'Entrar')+'</button></form></main>';
 }
@@ -502,6 +507,7 @@ function profileForm(type){
  '<div class="field"><label for="f-name">Nombre</label><input id="f-name" maxlength="40" autocomplete="name" value="'+esc(p?p.name:S.meName)+'"></div>'+
  '<div class="field"><span class="lbl">Soy</span><div class="roles" role="group"><button type="button" class="role" data-act="pickRole" data-id="fotografo" aria-pressed="'+(S.form.role==='fotografo')+'">Fotógrafo/a</button><button type="button" class="role" data-act="pickRole" data-id="modelo" aria-pressed="'+(S.form.role==='modelo')+'">Modelo</button></div></div>'+
  '<div class="field"><label for="f-bio">Descripción corta</label><textarea id="f-bio" maxlength="160" placeholder="Retrato y calle, Sevilla. Siempre con ganas de quedar.">'+esc(p?p.bio:'')+'</textarea></div>'+
+ '<div class="field"><label for="f-insta">Instagram (opcional)</label><input id="f-insta" maxlength="60" autocapitalize="none" autocomplete="off" placeholder="@tuusuario" value="'+(p&&p.instagram?'@'+esc(p.instagram):'')+'"><span class="hint">Se verá en tu perfil como botón directo a tu Instagram. Es público para toda la comunidad.</span></div>'+
  '<div class="field"><label for="f-contact">WhatsApp o teléfono</label><input id="f-contact" maxlength="60" inputmode="tel" placeholder="+34 600 000 000 o @usuario" value="'+esc(edit&&S.myContact?S.myContact:'')+'"><span class="hint">Solo lo ven los admins, para tener localizada a la gente.'+(edit&&!S.myContact?' Déjalo vacío para mantener el que ya tienes.':'')+'</span></div>'+
  (edit?'':rulesHtml('signup'))+'<p id="f-err" class="err" hidden></p><button class="btn pri wide" id="f-go" data-act="saveProfile">'+(edit?'Guardar cambios':'Crear mi cuenta')+'</button>';
 }
@@ -551,7 +557,8 @@ async function doAuth(){
   var code=$('#f-code').value.trim(),contact=$('#f-contact').value.trim();
   if(!code)return showErr('f-err','Pide el código de la comunidad a un admin.');
   if(contact.length<6)return showErr('f-err','Añade tu WhatsApp o teléfono. Solo lo ven los admins.');
-  req.code=code;req.rol=S.form.role;req.bio=$('#f-bio').value.trim();req.contacto=contact;req.avatar=S.form.avatar||'';
+  var ig=$('#f-insta').value.trim();if(ig&&!igNorm(ig))return showErr('f-err','Ese usuario de Instagram no parece válido. Ejemplo: @fomosevilla');
+  req.instagram=ig;req.code=code;req.rol=S.form.role;req.bio=$('#f-bio').value.trim();req.contacto=contact;req.avatar=S.form.avatar||'';
  }
  var btn=$('#f-go');btn.disabled=true;btn.textContent=reg?'Creando…':'Entrando…';
  var r=await api(req);
@@ -565,7 +572,8 @@ async function saveProfile(){
  if(name.length<2)return showErr('f-err','Escribe tu nombre (mínimo 2 letras).');
  if(contact&&contact.length<6)return showErr('f-err','Ese contacto parece demasiado corto.');
  var btn=$('#f-go');btn.disabled=true;btn.textContent='Guardando…';
- var req={action:'updateProfile',nombre:name,rol:S.form.role,bio:bio};
+ var ig=$('#f-insta').value.trim();if(ig&&!igNorm(ig)){btn.disabled=false;btn.textContent='Guardar cambios';return showErr('f-err','Ese usuario de Instagram no parece válido. Ejemplo: @fomosevilla')}
+ var req={action:'updateProfile',nombre:name,rol:S.form.role,bio:bio,instagram:ig};
  if(contact)req.contacto=contact;if(S.form.avatar)req.avatar=S.form.avatar;
  var r=await api(req);
  if(!r.ok){btn.disabled=false;btn.textContent='Guardar cambios';return showErr('f-err',r.error||'No se pudo guardar.')}
@@ -673,7 +681,7 @@ function applyState(r){
  S.uid=r.me.id;S.isAdmin=!!r.me.admin;S.myContact=r.me.contacto||undefined;S.meName=r.me.nombre||'';
  var pm=new Map(),ad=new Set(),ct=new Map();
  (r.users||[]).forEach(function(u){
-  pm.set(u.id,{id:u.id,name:str(u.nombre,40),role:u.rol==='modelo'?'modelo':'fotografo',bio:str(u.bio,200),avatar:gimg(u.avatar,160),createdAt:+u.creado||0});
+  pm.set(u.id,{id:u.id,name:str(u.nombre,40),role:u.rol==='modelo'?'modelo':'fotografo',bio:str(u.bio,200),instagram:igNorm(u.instagram),avatar:gimg(u.avatar,160),createdAt:+u.creado||0});
   if(u.admin)ad.add(u.id);if(u.contacto)ct.set(u.id,str(u.contacto,80));
  });
  var em=new Map();(r.events||[]).forEach(function(e){em.set(e.id,{id:e.id,name:str(e.nombre,40)||'Quedada',date:str(e.fecha,10),status:e.estado==='closed'?'closed':'open',maxPhotos:clamp(+e.max||3,1,10)})});

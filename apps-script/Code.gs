@@ -13,7 +13,7 @@
  */
 
 var TABS = {
-  Usuarios: ['id', 'nombre', 'rol', 'bio', 'avatar', 'contacto', 'pin_hash', 'token_hash', 'creado', 'admin'],
+  Usuarios: ['id', 'nombre', 'rol', 'bio', 'avatar', 'contacto', 'pin_hash', 'token_hash', 'creado', 'admin', 'instagram'],
   Quedadas: ['id', 'nombre', 'fecha', 'estado', 'max_fotos'],
   Fotos: ['id', 'evento', 'autor', 'etiquetado', 'archivo', 'creado'],
   Votos: ['usuario', 'evento', 'foto', 'tipo', 'momento'],
@@ -87,6 +87,11 @@ function route_(req) {
 function fail_(code, msg) { var e = new Error(msg || code); e.code = code; throw e; }
 function tz_() { return SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone() || 'Europe/Madrid'; }
 function sheet_(n) { return SpreadsheetApp.getActiveSpreadsheet().getSheetByName(n); }
+function ig_(s) {
+  // Acepta "@usuario", "usuario" o un enlace de instagram.com/usuario. Devuelve '' si no es válido.
+  var v = String(s == null ? '' : s).trim().replace(/^(https?:\/\/)?(www\.)?instagram\.com\//i, '').replace(/^@+/, '').split(/[/?#]/)[0];
+  return /^[A-Za-z0-9._]{1,30}$/.test(v) ? v.toLowerCase() : '';
+}
 function clean_(s, n) { return String(s == null ? '' : s).replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, n); }
 function uid_() { return Utilities.getUuid().replace(/-/g, '').slice(0, 10); }
 function now_() { return String(Date.now()); }
@@ -176,9 +181,9 @@ function state_(req) {
   var v = votes_(me);
   return {
     ok: true,
-    me: { id: me.id, nombre: me.nombre, rol: me.rol, bio: me.bio, avatar: me.avatar, admin: admin, contacto: me.contacto },
+    me: { id: me.id, nombre: me.nombre, rol: me.rol, bio: me.bio, avatar: me.avatar, instagram: me.instagram || '', admin: admin, contacto: me.contacto },
     users: rows_('Usuarios').map(function (u) {
-      var o = { id: u.id, nombre: u.nombre, rol: u.rol, bio: u.bio, avatar: u.avatar, admin: isAdmin_(u), creado: Number(u.creado) || 0 };
+      var o = { id: u.id, nombre: u.nombre, rol: u.rol, bio: u.bio, avatar: u.avatar, instagram: u.instagram || '', admin: isAdmin_(u), creado: Number(u.creado) || 0 };
       if (admin) o.contacto = u.contacto;
       return o;
     }),
@@ -204,11 +209,13 @@ H.register = function (req) {
   if (ROLES.indexOf(req.rol) < 0) fail_('invalid', 'Elige si eres fotógrafo/a o modelo');
   if (contacto.length < 6) fail_('invalid', 'Añade tu WhatsApp o teléfono');
   if (!/^\d{4,6}$/.test(pin)) fail_('invalid', 'El PIN tiene que ser de 4 a 6 números');
+  var insta = ig_(req.instagram);
+  if (req.instagram && !insta) fail_('invalid', 'Ese usuario de Instagram no parece válido');
   var taken = rows_('Usuarios').some(function (u) { return u.nombre.toLowerCase() === nombre.toLowerCase(); });
   if (taken) fail_('name_taken', 'Ese nombre ya está en uso. Añade tu apellido o un número');
   var id = 'u_' + uid_(), token = newToken_();
   var avatar = req.avatar ? saveImg_(req.avatar, 'avatar-' + id, 200000) : '';
-  addRow_('Usuarios', [id, nombre, req.rol, bio, avatar, contacto, hashPin_(pin, id), sha_(token), now_(), '']);
+  addRow_('Usuarios', [id, nombre, req.rol, bio, avatar, contacto, hashPin_(pin, id), sha_(token), now_(), '', insta]);
   return { ok: true, token: token };
 };
 
@@ -242,6 +249,11 @@ H.updateProfile = function (req) {
     setCell_('Usuarios', me._row, 'rol', req.rol);
   }
   if (req.bio != null) setCell_('Usuarios', me._row, 'bio', clean_(req.bio, 160));
+  if (req.instagram != null) {
+    var insta = ig_(req.instagram);
+    if (String(req.instagram).trim() && !insta) fail_('invalid', 'Ese usuario de Instagram no parece válido');
+    setCell_('Usuarios', me._row, 'instagram', insta);
+  }
   if (req.contacto) {
     var c = clean_(req.contacto, 60);
     if (c.length < 6) fail_('invalid', 'Ese contacto parece demasiado corto');

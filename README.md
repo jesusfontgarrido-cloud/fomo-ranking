@@ -32,7 +32,8 @@ Los teléfonos solo los reciben las cuentas con `SI` en la columna `admin` de la
 - **Nueva quedada**: pestaña Admin → Quedadas → Nueva quedada.
 - **Cerrar votaciones**: Admin → Quedadas → Cerrar. El ranking queda fijado.
 - **Borrar usuarios o fotos**: pestaña Admin. Motivos: cuenta no real, fotos inapropiadas o cualquier otro abuso de las funciones.
-- Si cambias `Code.gs`: Implementar → **Gestionar implementaciones** → editar → *Nueva versión* (la URL no cambia).
+- Cada persona puede añadir su **Instagram** en su perfil (público). Se ve como botón «Ver Instagram».
+- Si cambias `Code.gs`: Implementar → **Gestionar implementaciones** → editar → *Nueva versión* (la URL no cambia). Si el cambio añade columnas a la hoja, ejecuta también `setup()` una vez: actualiza las cabeceras sin tocar los datos.
 
 ## Cómo funciona por dentro
 - Cada persona entra con **nombre + PIN** (4-6 números). El PIN se guarda con hash SHA-256 y el navegador recibe un token aleatorio del que solo se guarda el hash. Tras 5 fallos seguidos se bloquea el login 10 minutos.

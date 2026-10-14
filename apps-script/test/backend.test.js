@@ -135,5 +135,19 @@ ok('actualizar perfil y borrar quedada con sus fotos', () => {
   assert.ok(call({ action: 'deleteEvent', token: jesus.token, id: evId }).ok);
   assert.strictEqual(st(eva.token).photos.length, 0);
 });
+ok('instagram: se normaliza, se valida y es visible para todos', () => {
+  assert.ok(call({ action: 'updateProfile', token: eva.token, instagram: ' @Eva.Soto_ ' }).ok);
+  assert.strictEqual(st(luis.token).users.find(u => u.nombre === 'Eva').instagram, 'eva.soto_');
+  assert.ok(call({ action: 'updateProfile', token: eva.token, instagram: 'https://www.instagram.com/eva.foto/?hl=es' }).ok);
+  assert.strictEqual(st(eva.token).me.instagram, 'eva.foto');
+  assert.ok(call({ action: 'updateProfile', token: eva.token, instagram: 'instagram.com/Eva.Dos' }).ok);
+  assert.strictEqual(st(eva.token).me.instagram, 'eva.dos');
+  assert.strictEqual(call({ action: 'updateProfile', token: eva.token, instagram: 'no vale!!' }).code, 'invalid');
+  assert.ok(call({ action: 'updateProfile', token: eva.token, instagram: '' }).ok);
+  assert.strictEqual(st(eva.token).me.instagram, '');
+  const r = reg('Con Insta', 'modelo', { instagram: '@con_insta' });
+  assert.strictEqual(st(r.token).me.instagram, 'con_insta');
+  assert.strictEqual(reg('Mal Insta', 'modelo', { instagram: 'a b c' }).code, 'invalid');
+});
 ok('acción desconocida', () => assert.strictEqual(call({ action: 'hack' }).code, 'bad_action'));
 console.log('\n' + n + ' pruebas correctas');
